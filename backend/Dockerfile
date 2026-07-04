@@ -4,23 +4,31 @@ FROM php:8.2-cli
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    unzip \
+    zip \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
-    zip \
-    unzip \
-    default-mysql-client \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+    && docker-php-ext-install pdo_mysql mbstring bcmath exif pcntl gd zip
 
 # Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# Cache bust: force fresh composer resolution
-ARG CACHEBUST=1
+# Copy the entire Laravel project
+COPY . .
 
-# Copy composer files first for better layer caching
-COPY composer.json composer.lock ./
-RUN composer install --optimize-autoloader --no-dev --no-scripts --no-interaction
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Laravel setup
+RUN php artisan config:clear || true
+RUN php artisan route:clear || true
+RUN php artisan view:clear || true
+
+# Railway provides the PORT environment variable
+EXPOSE 8080
+
+CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
