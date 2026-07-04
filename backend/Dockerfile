@@ -18,20 +18,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
+# Cache bust: force fresh composer resolution
+ARG CACHEBUST=1
+
 # Copy composer files first for better layer caching
 COPY composer.json composer.lock ./
 RUN composer install --optimize-autoloader --no-dev --no-scripts --no-interaction
-
-# Copy the rest of the application
-COPY . .
-
-# Generate optimized autoloader and cache config
-RUN composer dump-autoload --optimize \
-    && php artisan config:clear
-
-# Set permissions for storage and cache
-RUN chmod -R 775 storage bootstrap/cache
-
-EXPOSE 8080
-
-CMD php artisan migrate --force && php artisan serve --host 0.0.0.0 --port ${PORT:-8080}
