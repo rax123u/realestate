@@ -45,18 +45,6 @@ export const MEDIA = {
     },
     
     {
-      id: 5,
-      title: 'The Kensington Manor',
-      location: 'London, United Kingdom',
-      price: 31200000,
-      bedrooms: 7,
-      bathrooms: 8,
-      area: 9800,
-      image: 'https://images.unsplash.com/photo-1600047509807-ba8f84d4fa67?w=1200&q=80',
-      featured: true,
-      showcase: true,
-    },
-    {
       id: 6,
       title: 'Desert Mirage',
       location: 'Scottsdale, Arizona',
