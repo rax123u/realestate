@@ -43,18 +43,7 @@ export const MEDIA = {
       featured: true,
       showcase: true,
     },
-    {
-      id: 4,
-      title: 'Coastal Horizon',
-      location: 'Miami Beach, Florida',
-      price: 9800000,
-      bedrooms: 5,
-      bathrooms: 6,
-      area: 6100,
-      image: 'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=1200&q=80',
-      featured: true,
-      showcase: false,
-    },
+    
     {
       id: 5,
       title: 'The Kensington Manor',
@@ -123,8 +112,8 @@ export const MEDIA = {
   agent: {
     name: 'Muhammad Rayyan',
     title: 'Senior Luxury Advisor',
-    phone: '+1 (212) 555-0198',
-    email: 'alexander@aurelius.com',
+    phone: '+92-3189524077',
+    email: 'rayyanmuhammad224@gmail.com',
     image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80',
   },
 };
