@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+backend/vendor/
+
+# Environment
+.env
+frontend/.env
+backend/.env
+
+# Build
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+backend/storage/logs/*
+
+# Cache
+backend/bootstrap/cache/*
+!backend/bootstrap/cache/.gitignore

@@ -1,0 +1,15 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: aurelius_mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: aurelius_realestate
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

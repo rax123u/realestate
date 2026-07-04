@@ -1,0 +1,361 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", "Inter", system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", "Playfair Display", serif;
+  
+  --color-luxury-black: #050505;
+  --color-luxury-charcoal: #0d0d0d;
+  --color-luxury-gray: #151515;
+  --color-luxury-darkgray: #1c1c1c;
+  --color-luxury-silver: #9e9e9e;
+  --color-luxury-gold: #d4af37;
+  --color-luxury-cream: #f6f3eb;
+  --color-luxury-gold-glow: rgba(212, 175, 55, 0.15);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-luxury-black);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-luxury-gray);
+  border-radius: 3px;
+  border: 1px solid var(--color-luxury-black);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-luxury-gold);
+}
+
+/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-luxury-black);
+  color: var(--color-luxury-cream);
+  overflow-x: hidden !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+#root {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 100vh !important;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow-x: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+::selection {
+  background-color: var(--color-luxury-gold);
+  color: var(--color-luxury-black);
+}
+
+/* Custom Swiper Customization */
+.swiper-pagination-bullet {
+  background: var(--color-luxury-gold) !important;
+  opacity: 0.3 !important;
+  transition: all 0.3s ease !important;
+}
+.swiper-pagination-bullet-active {
+  opacity: 1 !important;
+  width: 24px !important;
+  border-radius: 4px !important;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: var(--color-luxury-gold) !important;
+  background: rgba(13, 13, 13, 0.6) !important;
+  backdrop-filter: blur(10px) !important;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  transition: all 0.3s ease !important;
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 18px !important;
+  font-weight: bold !important;
+}
+
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  background: var(--color-luxury-gold) !important;
+  color: var(--color-luxury-black) !important;
+  border-color: var(--color-luxury-gold) !important;
+  box-shadow: 0 0 15px var(--color-luxury-gold-glow);
+}
+
+/* Typography & Layout Utilities */
+.font-serif-lux {
+  font-family: var(--font-serif);
+}
+
+.text-display {
+  font-family: var(--font-serif);
+  font-size: clamp(2.5rem, 7.5vw, 6.5rem);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.text-headline {
+  font-family: var(--font-serif);
+  font-size: clamp(1.75rem, 4vw, 3.25rem);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.text-subhead {
+  font-size: clamp(0.75rem, 1.2vw, 0.875rem);
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--color-luxury-gold);
+}
+
+/* Ambient SaaS Backgrounds */
+.grid-bg {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse at 50% 50%, black 60%, transparent 100%);
+}
+
+.gradient-radial-glow {
+  background: radial-gradient(circle at center, var(--color-luxury-gold-glow) 0%, transparent 70%);
+}
+
+/* Glow Orb Animation */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+}
+
+.glow-orb {
+  filter: blur(100px);
+  opacity: 0.45;
+  animation: float-slow 20s infinite ease-in-out;
+}
+
+/* Luxury Glassmorphism Card and Panel */
+.glass-panel {
+  background: rgba(13, 13, 13, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-card {
+  background: rgba(20, 20, 20, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  background: rgba(25, 25, 25, 0.6);
+  border-color: rgba(212, 175, 55, 0.3);
+  box-shadow: 
+    0 10px 30px -10px rgba(0, 0, 0, 0.7),
+    0 0 20px var(--color-luxury-gold-glow);
+  transform: translateY(-4px);
+}
+
+.btn-luxury {
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+  color: var(--color-luxury-cream);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 500;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-luxury::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  transition: all 0.6s ease;
+}
+
+.btn-luxury:hover::before {
+  left: 100%;
+}
+
+.btn-luxury:hover {
+  border-color: var(--color-luxury-gold);
+  box-shadow: 0 0 15px var(--color-luxury-gold-glow);
+  transform: scale(1.02);
+}
+
+.btn-luxury-solid {
+  background: var(--color-luxury-gold);
+  color: var(--color-luxury-black);
+  border: 1px solid var(--color-luxury-gold);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 600;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-luxury-solid:hover {
+  background: var(--color-luxury-cream);
+  border-color: var(--color-luxury-cream);
+  color: var(--color-luxury-black);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
+  transform: scale(1.02);
+}
+
+/* Presentation Snapping Mode */
+html.snap-mode {
+  scroll-snap-type: y proximity;
+  scroll-behavior: smooth;
+}
+
+/* Mandatory snapping ONLY on tall screens where content fits comfortably */
+@media (min-height: 950px) and (min-width: 1024px) {
+  html.snap-mode {
+    scroll-snap-type: y mandatory;
+  }
+}
+
+.snap-slide {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: 100vh;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+  align-items: stretch !important;
+}
+
+/* Ensure child layouts under snap slides fill parent */
+.snap-slide > * {
+  flex-grow: 1;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Responsive height optimization for laptops (MacBook Pro 13", 15", etc.) */
+@media (max-height: 950px) {
+  .snap-slide {
+    min-height: 90vh !important; /* Allow slightly shorter slides to fit on laptops */
+  }
+  
+  .snap-slide > section,
+  .snap-slide > footer {
+    padding-top: 3.5rem !important;
+    padding-bottom: 3.5rem !important;
+  }
+
+  /* Shrink headings slightly to save space */
+  .snap-slide h2 {
+    font-size: clamp(2rem, 3.5vw, 2.75rem) !important;
+    line-height: 1.15 !important;
+  }
+
+  /* Shrink showcases */
+  .snap-slide .mb-16,
+  .snap-slide .mb-20 {
+    margin-bottom: 2rem !important;
+  }
+}
+
+/* GPU Hardware Acceleration & Layer Promotion for 60fps scrolling */
+.snap-slide, 
+.snap-slide > section,
+.glass-panel,
+.glass-card,
+.swiper-slide,
+.swiper-wrapper {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
+/* Render optimization for high-density (Retina) screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .snap-slide {
+    transform-style: preserve-3d;
+  }
+}
+
+/* Prevent repaints during scroll snap transitions */
+html.snap-mode {
+  scroll-behavior: smooth;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+}
