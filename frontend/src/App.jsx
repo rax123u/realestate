@@ -21,32 +21,25 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   useEffect(() => {
-    const isHome = location.pathname === '/';
     let lenis = null;
     let rafId = null;
 
-    if (isHome) {
-      document.documentElement.classList.add('snap-mode');
-    } else {
-      document.documentElement.classList.remove('snap-mode');
-      
-      lenis = new Lenis({
-        duration: 1.2,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        orientation: 'vertical',
-        smoothWheel: true,
-      });
+    lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      smoothWheel: true,
+    });
 
-      lenis.on('scroll', ScrollTrigger.update);
+    lenis.on('scroll', ScrollTrigger.update);
 
-      const raf = (time) => {
-        lenis.raf(time);
-        rafId = requestAnimationFrame(raf);
-      };
+    const raf = (time) => {
+      lenis.raf(time);
       rafId = requestAnimationFrame(raf);
+    };
+    rafId = requestAnimationFrame(raf);
 
-      window.lenis = lenis;
-    }
+    window.lenis = lenis;
 
     return () => {
       if (lenis) {
@@ -56,7 +49,6 @@ function AnimatedRoutes() {
       if (rafId) {
         cancelAnimationFrame(rafId);
       }
-      document.documentElement.classList.remove('snap-mode');
     };
   }, [location.pathname]);
 

@@ -275,23 +275,8 @@ body {
   transform: scale(1.02);
 }
 
-/* Presentation Snapping Mode */
-html.snap-mode {
-  scroll-snap-type: y proximity;
-  scroll-behavior: smooth;
-}
-
-/* Mandatory snapping ONLY on tall screens where content fits comfortably */
-@media (min-height: 950px) and (min-width: 1024px) {
-  html.snap-mode {
-    scroll-snap-type: y mandatory;
-  }
-}
-
+/* Presentation Layout wrapper */
 .snap-slide {
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
-  min-height: 100vh;
   width: 100% !important;
   max-width: 100% !important;
   display: flex;
@@ -300,36 +285,9 @@ html.snap-mode {
   align-items: stretch !important;
 }
 
-/* Ensure child layouts under snap slides fill parent */
 .snap-slide > * {
-  flex-grow: 1;
   width: 100% !important;
   max-width: 100% !important;
-}
-
-/* Responsive height optimization for laptops (MacBook Pro 13", 15", etc.) */
-@media (max-height: 950px) {
-  .snap-slide {
-    min-height: 90vh !important; /* Allow slightly shorter slides to fit on laptops */
-  }
-  
-  .snap-slide > section,
-  .snap-slide > footer {
-    padding-top: 3.5rem !important;
-    padding-bottom: 3.5rem !important;
-  }
-
-  /* Shrink headings slightly to save space */
-  .snap-slide h2 {
-    font-size: clamp(2rem, 3.5vw, 2.75rem) !important;
-    line-height: 1.15 !important;
-  }
-
-  /* Shrink showcases */
-  .snap-slide .mb-16,
-  .snap-slide .mb-20 {
-    margin-bottom: 2rem !important;
-  }
 }
 
 /* GPU Hardware Acceleration & Layer Promotion for 60fps scrolling */
