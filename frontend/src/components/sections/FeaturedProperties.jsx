@@ -66,14 +66,14 @@ function PropertyCard({ property }) {
 
 export default function FeaturedProperties() {
   const [properties, setProperties] = useState(
-    MEDIA.properties.filter((p) => p.featured)
+    MEDIA.properties.filter((p) => p.featured).slice(0, 3)
   );
 
   useEffect(() => {
     propertyAPI
       .featured()
       .then(({ data }) => {
-        if (data?.length) setProperties(data);
+        if (data?.length) setProperties(data.slice(0, 3));
       })
       .catch(() => {});
   }, []);
