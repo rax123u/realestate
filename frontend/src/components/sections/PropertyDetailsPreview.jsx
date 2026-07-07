@@ -45,7 +45,7 @@ export default function PropertyDetailsPreview() {
     <section id="details" className="py-28 md:py-36 bg-luxury-charcoal relative overflow-hidden w-full">
       <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-luxury-gold/5 blur-[100px] pointer-events-none" />
 
-      <div className="w-full max-w-[92%] mx-auto px-6">
+      <div className="w-full max-w-[94%] xl:max-w-[1280px] 2xl:max-w-[1440px] mx-auto px-6">
         <div className="mb-16">
           <p className="text-subhead mb-3">Property Preview</p>
           <h2 className="text-headline text-luxury-cream">Architecture That Inspires</h2>

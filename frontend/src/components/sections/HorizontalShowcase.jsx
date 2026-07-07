@@ -33,7 +33,7 @@ export default function HorizontalShowcase() {
       {/* Decorative subtle background mesh */}
       <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
 
-      <div className="w-full max-w-[92%] mx-auto mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="w-full max-w-[94%] xl:max-w-[1280px] 2xl:max-w-[1440px] mx-auto mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <p className="text-subhead mb-3">Curated Collection</p>
           <h2 className="text-headline text-luxury-cream">Signature Estates</h2>
@@ -43,7 +43,7 @@ export default function HorizontalShowcase() {
         </p>
       </div>
 
-      <div className="w-full max-w-[92%] mx-auto">
+      <div className="w-full max-w-[94%] xl:max-w-[1280px] 2xl:max-w-[1440px] mx-auto">
         <Swiper
           modules={[Navigation, Pagination, Autoplay, EffectFade]}
           effect="fade"

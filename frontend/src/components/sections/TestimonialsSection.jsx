@@ -20,8 +20,8 @@ export default function TestimonialsSection() {
       {/* Decorative ambient background orb */}
       <div className="absolute top-[10%] left-[20%] w-[350px] h-[350px] rounded-full bg-luxury-gold/5 blur-[120px] pointer-events-none" />
 
-      <div className="w-full max-w-[92%] mx-auto">
-        <div className="text-center mb-20">
+      <div className="w-full max-w-[94%] xl:max-w-[1280px] 2xl:max-w-[1440px] mx-auto">
+        <div className="text-center mb-12">
           <p className="text-subhead mb-3">Client Stories</p>
           <h2 className="text-headline text-luxury-cream">Trusted by Discerning Clients</h2>
         </div>

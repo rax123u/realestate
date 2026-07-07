@@ -54,7 +54,7 @@ export default function Navbar() {
           : 'bg-transparent py-6 border-b border-transparent'
       }`}
     >
-      <div className="w-full max-w-[92%] mx-auto px-6 flex items-center justify-between">
+      <div className="w-full max-w-[94%] xl:max-w-[1280px] 2xl:max-w-[1440px] mx-auto px-6 flex items-center justify-between">
         <Link 
           to="/" 
           className="text-lg font-medium tracking-[0.35em] uppercase text-luxury-cream hover:text-luxury-gold transition-colors duration-300"

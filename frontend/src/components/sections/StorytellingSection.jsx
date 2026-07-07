@@ -6,7 +6,7 @@ export default function StorytellingSection() {
 
   return (
     <section id="story" className="relative bg-luxury-black py-28 md:py-36 border-t border-white/5 overflow-hidden w-full">
-      <div className="w-full max-w-[92%] mx-auto px-6">
+      <div className="w-full max-w-[94%] xl:max-w-[1280px] 2xl:max-w-[1440px] mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 md:gap-24">
           
           {/* Left Sticky Panel */}

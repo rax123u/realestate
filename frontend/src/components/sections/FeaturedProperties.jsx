@@ -82,8 +82,8 @@ export default function FeaturedProperties() {
     <section id="featured" className="py-28 md:py-36 px-6 bg-luxury-black relative overflow-hidden w-full">
       <div className="absolute top-0 right-0 w-[450px] h-[450px] rounded-full bg-luxury-gold/5 blur-[120px] pointer-events-none" />
 
-      <div className="w-full max-w-[92%] mx-auto">
-        <div className="mb-20 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="w-full max-w-[94%] xl:max-w-[1280px] 2xl:max-w-[1440px] mx-auto">
+        <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <p className="text-subhead mb-3">Exclusive Listings</p>
             <h2 className="text-headline text-luxury-cream">

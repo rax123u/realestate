@@ -6,7 +6,7 @@ export default function Footer() {
       {/* Subtle border grids */}
       <div className="absolute inset-0 grid-bg opacity-[0.03] pointer-events-none" />
 
-      <div className="w-full max-w-[92%] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-16 mb-20 relative z-10">
+      <div className="w-full max-w-[94%] xl:max-w-[1280px] 2xl:max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-16 mb-16 relative z-10">
         
         {/* Branding Column */}
         <div className="lg:col-span-5 space-y-6">
@@ -98,7 +98,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="w-full max-w-[92%] mx-auto pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+      <div className="w-full max-w-[94%] xl:max-w-[1280px] 2xl:max-w-[1440px] mx-auto pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
         <p className="text-[10px] uppercase tracking-wider text-luxury-silver/70">
           &copy; {new Date().getFullYear()} Aurelius Luxury Real Estate. All rights reserved.
         </p>

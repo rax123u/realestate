@@ -37,8 +37,8 @@ export default function ContactSection() {
     <section id="contact" className="py-28 md:py-36 px-6 bg-luxury-charcoal relative overflow-hidden w-full">
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-luxury-gold/5 blur-[120px] pointer-events-none" />
 
-      <div className="w-full max-w-[92%] mx-auto">
-        <div className="mb-20">
+      <div className="w-full max-w-[94%] xl:max-w-[1280px] 2xl:max-w-[1440px] mx-auto">
+        <div className="mb-12">
           <p className="text-subhead mb-3">Get in Touch</p>
           <h2 className="text-headline text-luxury-cream">Begin Your Luxury Journey</h2>
         </div>
