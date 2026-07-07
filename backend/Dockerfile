@@ -39,6 +39,9 @@ RUN composer install \
 RUN mkdir -p storage bootstrap/cache && \
     chmod -R 775 storage bootstrap/cache
 
+# Create the public storage symlink so uploaded images are browser-accessible
+RUN php artisan storage:link
+
 # Expose Railway port
 EXPOSE 8080
 
