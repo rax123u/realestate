@@ -13,7 +13,7 @@ export default function StorytellingSection() {
           <div className="lg:col-span-5 lg:sticky lg:top-32 h-fit flex flex-col justify-between">
             <div>
               <p className="text-subhead mb-3">Our Philosophy</p>
-              <h2 className="text-display text-luxury-cream mb-6 tracking-tight">
+              <h2 className="text-3xl sm:text-4xl lg:text-4.5xl xl:text-5xl font-serif font-light text-luxury-cream mb-6 tracking-tight leading-tight">
                 Architectural <br/>
                 <span className="text-luxury-gold font-normal">Prestige</span>
               </h2>
