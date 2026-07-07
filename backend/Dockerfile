@@ -42,6 +42,9 @@ RUN mkdir -p storage bootstrap/cache && \
 # Create the public storage symlink so uploaded images are browser-accessible
 RUN php artisan storage:link
 
+# Configure PHP upload limits
+RUN echo "upload_max_filesize = 25M\npost_max_size = 25M\nmemory_limit = 256M" > /usr/local/etc/php/conf.d/uploads.ini
+
 # Expose Railway port
 EXPOSE 8080
 

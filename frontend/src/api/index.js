@@ -20,8 +20,8 @@ api.interceptors.request.use((config) => {
 export default api;
 
 export const resolveImageUrl = (path) => {
-  if (!path) return '';
-  if (path.startsWith('blob:')) return path;
+  if (!path || typeof path !== 'string') return '';
+  if (path.startsWith('blob:') || path.startsWith('data:')) return path;
 
   const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
   // Get backend domain (strip /api or /api/ if present)
