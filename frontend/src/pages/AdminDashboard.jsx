@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { adminAPI, propertyAPI, inquiryAPI, reportAPI } from '../api';
+import { adminAPI, propertyAPI, inquiryAPI, reportAPI, resolveImageUrl } from '../api';
 import { formatPrice } from '../data/fallback';
 import Button from '../components/ui/Button';
 import Navbar from '../components/layout/Navbar';
@@ -326,7 +326,7 @@ export default function AdminDashboard() {
                       <div key={p.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-6 glass-panel rounded-lg shadow-2xl border border-white/5 hover:border-luxury-gold/20 transition-all duration-300 gap-4">
                         <div className="flex items-center gap-5">
                           {p.primary_image || p.image ? (
-                            <img src={p.primary_image || p.image} alt={p.title} className="w-16 h-16 object-cover rounded border border-white/5" />
+                            <img src={resolveImageUrl(p.primary_image || p.image)} alt={p.title} className="w-16 h-16 object-cover rounded border border-white/5" />
                           ) : (
                             <div className="w-16 h-16 bg-luxury-black rounded flex items-center justify-center text-luxury-silver/30 text-xs border border-white/5">No image</div>
                           )}

@@ -3,7 +3,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, EffectFade } from 'swiper/modules';
 import { motion } from 'framer-motion';
 import Button from '../ui/Button';
-import { propertyAPI } from '../../api';
+import { propertyAPI, resolveImageUrl } from '../../api';
 import { MEDIA, formatPrice } from '../../data/fallback';
 
 import 'swiper/css';
@@ -65,7 +65,7 @@ export default function PropertyDetailsPreview() {
               {images.map((img, i) => (
                 <SwiperSlide key={i}>
                   <img
-                    src={img.url || img}
+                    src={resolveImageUrl(img.url || img)}
                     alt={`${property.title} - ${i + 1}`}
                     className="w-full h-full object-cover"
                     loading="lazy"

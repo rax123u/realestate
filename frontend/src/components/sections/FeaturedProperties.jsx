@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { propertyAPI } from '../../api';
+import { propertyAPI, resolveImageUrl } from '../../api';
 import { MEDIA, formatPrice } from '../../data/fallback';
 
 function PropertyCard({ property }) {
@@ -18,7 +18,7 @@ function PropertyCard({ property }) {
         </div>
 
         <img
-          src={imageUrl}
+          src={resolveImageUrl(imageUrl)}
           alt={property.title}
           loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"

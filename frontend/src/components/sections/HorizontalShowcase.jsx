@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
 import { Link } from 'react-router-dom';
-import { propertyAPI } from '../../api';
+import { propertyAPI, resolveImageUrl } from '../../api';
 import { MEDIA, formatPrice } from '../../data/fallback';
 
 import 'swiper/css';
@@ -57,7 +57,7 @@ export default function HorizontalShowcase() {
             return (
               <SwiperSlide key={property.id} className="relative bg-luxury-charcoal flex items-end">
                 <img
-                  src={imageUrl}
+                  src={resolveImageUrl(imageUrl)}
                   alt={property.title}
                   className="absolute inset-0 w-full h-full object-cover"
                   loading="lazy"

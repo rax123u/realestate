@@ -4,21 +4,11 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Button from '../components/ui/Button';
 import ProtectedRoute from '../components/ProtectedRoute';
-import { propertyAPI, inquiryAPI, reportAPI } from '../api';
+import { propertyAPI, inquiryAPI, reportAPI, resolveImageUrl } from '../api';
 import { formatPrice } from '../data/fallback';
 import { useAuth } from '../context/AuthContext';
 
-// Resolve relative backend paths (e.g. "/storage/properties/xyz.jpg") into full URLs.
-// Falls back gracefully if the value is already a full URL (mock/seeded data, Cloudinary, etc).
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '';
 
-function resolveImageUrl(path) {
-  if (!path) return '';
-  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:')) return path;
-  const base = API_BASE_URL.replace(/\/$/, '');
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${base}${cleanPath}`;
-}
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },

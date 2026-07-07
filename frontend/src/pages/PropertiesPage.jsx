@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Button from '../components/ui/Button';
-import { propertyAPI } from '../api';
+import { propertyAPI, resolveImageUrl } from '../api';
 import { formatPrice } from '../data/fallback';
 
 const LISTING_TYPES = [
@@ -259,7 +259,7 @@ export default function PropertiesPage() {
                         </div>
 
                         <img
-                          src={imageUrl}
+                          src={resolveImageUrl(imageUrl)}
                           alt={property.title}
                           className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-[1000ms]"
                           loading="lazy"

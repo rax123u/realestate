@@ -19,6 +19,32 @@ api.interceptors.request.use((config) => {
 
 export default api;
 
+export const resolveImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('blob:')) return path;
+
+  const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+  // Get backend domain (strip /api or /api/ if present)
+  const base = apiURL.replace(/\/api\/?$/, '').replace(/\/$/, '');
+
+  // If the path contains localhost or 127.0.0.1, it means the database has a record
+  // pointing to the local dev server. We replace the local origin with the production backend base.
+  if (path.includes('localhost') || path.includes('127.0.0.1')) {
+    const storageIndex = path.indexOf('/storage/');
+    if (storageIndex !== -1) {
+      return `${base}${path.substring(storageIndex)}`;
+    }
+  }
+
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${base}${cleanPath}`;
+};
+
+
 export const authAPI = {
   register: (data) => api.post('/register', data),
   login: (data) => api.post('/login', data),

@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Button from '../components/ui/Button';
-import { propertyAPI, inquiryAPI } from '../api';
+import { propertyAPI, inquiryAPI, resolveImageUrl } from '../api';
 import { MEDIA, formatPrice } from '../data/fallback';
 import { useAuth } from '../context/AuthContext';
 
@@ -81,8 +81,8 @@ export default function PropertyDetailPage() {
   }
 
   const images = property.images?.length
-    ? property.images
-    : [{ url: property.image || property.primary_image }];
+    ? property.images.map(img => ({ ...img, url: resolveImageUrl(img.url) }))
+    : [{ url: resolveImageUrl(property.image || property.primary_image) }];
 
   const amenities = property.amenities?.length
     ? property.amenities
