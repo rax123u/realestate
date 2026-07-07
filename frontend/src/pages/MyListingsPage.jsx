@@ -8,6 +8,18 @@ import { propertyAPI, inquiryAPI, reportAPI } from '../api';
 import { formatPrice } from '../data/fallback';
 import { useAuth } from '../context/AuthContext';
 
+// Resolve relative backend paths (e.g. "/storage/properties/xyz.jpg") into full URLs.
+// Falls back gracefully if the value is already a full URL (mock/seeded data, Cloudinary, etc).
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '';
+
+function resolveImageUrl(path) {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:')) return path;
+  const base = API_BASE_URL.replace(/\/$/, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${base}${cleanPath}`;
+}
+
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
   { value: 'sold', label: 'Sold' },
@@ -103,7 +115,7 @@ function MyListingsContent() {
       primary_image: property.primary_image || property.image || '',
     });
     setEditFile(null);
-    setEditPreview(property.primary_image || property.image || '');
+    setEditPreview(resolveImageUrl(property.primary_image || property.image || ''));
   };
 
   const saveEdit = async (e) => {
@@ -268,14 +280,14 @@ function MyListingsContent() {
                                   disabled={!!editFile}
                                   onChange={(e) => {
                                     setForm({ ...form, primary_image: e.target.value });
-                                    setEditPreview(e.target.value);
+                                    setEditPreview(resolveImageUrl(e.target.value));
                                   }}
                                   className={inputClass}
                                 />
                                 {editFile && (
                                   <button
                                     type="button"
-                                    onClick={() => { setEditFile(null); setEditPreview(form.primary_image || ''); }}
+                                    onClick={() => { setEditFile(null); setEditPreview(resolveImageUrl(form.primary_image || '')); }}
                                     className="text-[10px] text-red-400 mt-2.5 text-left hover:underline cursor-pointer uppercase tracking-wider font-semibold"
                                   >
                                     Reset to URL
@@ -312,7 +324,7 @@ function MyListingsContent() {
                           <div className="flex items-center gap-5">
                             {p.primary_image || p.image ? (
                               <img 
-                                src={p.primary_image || p.image} 
+                                src={resolveImageUrl(p.primary_image || p.image)} 
                                 alt={p.title} 
                                 className="w-20 h-20 object-cover rounded border border-white/5 flex-shrink-0"
                               />
