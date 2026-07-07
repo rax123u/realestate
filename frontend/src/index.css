@@ -323,3 +323,99 @@ html.snap-mode {
   overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
 }
+
+/* Reusable Luxury Form System */
+.luxury-form-wrapper {
+  width: 100%;
+  max-width: 80%; /* 70-80% width container */
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+}
+
+@media (max-width: 1024px) {
+  .luxury-form-wrapper {
+    max-width: 100%;
+  }
+}
+
+.luxury-form-card {
+  width: 100%;
+  min-height: 480px; /* Taller form using min-height instead of fixed heights */
+  padding: 3.5rem 3rem; /* Increased padding */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(13, 13, 13, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 8px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2.25rem; /* Increased spacing */
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luxury-form-card:hover {
+  border-color: rgba(212, 175, 55, 0.25);
+  box-shadow: 
+    0 30px 60px -15px rgba(0, 0, 0, 0.8),
+    0 0 25px rgba(212, 175, 55, 0.08);
+}
+
+.luxury-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* Increased spacing */
+  width: 100%;
+}
+
+.luxury-label {
+  font-size: 0.65rem; /* ~10px */
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--color-luxury-silver);
+  font-weight: 600;
+  display: block;
+}
+
+.luxury-input-field {
+  width: 100%;
+  height: 3.5rem; /* Increased input field height */
+  background: rgba(5, 5, 5, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0 1.25rem;
+  color: var(--color-luxury-cream);
+  font-size: 0.875rem; /* text-sm equivalent */
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.luxury-input-field:focus {
+  border-color: rgba(212, 175, 55, 0.5);
+  outline: none;
+  background: rgba(5, 5, 5, 0.5);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+}
+
+.luxury-textarea-field {
+  width: 100%;
+  min-height: 180px; /* Increased textarea size */
+  background: rgba(5, 5, 5, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.25rem;
+  color: var(--color-luxury-cream);
+  font-size: 0.875rem;
+  border-radius: 4px;
+  resize: none;
+  transition: all 0.3s ease;
+}
+
+.luxury-textarea-field:focus {
+  border-color: rgba(212, 175, 55, 0.5);
+  outline: none;
+  background: rgba(5, 5, 5, 0.5);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+}

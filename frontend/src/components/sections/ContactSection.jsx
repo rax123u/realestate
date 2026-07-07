@@ -48,12 +48,12 @@ export default function ContactSection() {
           {/* Inquiry Form */}
           <form
             onSubmit={handleSubmit}
-            className="lg:col-span-6 space-y-8 glass-panel p-8 md:p-10 rounded-lg hover:border-luxury-gold/20 transition-all duration-500 shadow-xl"
+            className="lg:col-span-6 luxury-form-card"
           >
-            <h3 className="text-xl font-serif text-luxury-cream font-light mb-4">Send An Inquiry</h3>
+            <h3 className="text-xl font-serif text-luxury-cream font-light">Send An Inquiry</h3>
             
-            <div className="relative group">
-              <label className="block text-[9px] uppercase tracking-[0.2em] text-luxury-silver mb-2 font-semibold">
+            <div className="luxury-form-group">
+              <label className="luxury-label">
                 Your Name
               </label>
               <input
@@ -62,12 +62,12 @@ export default function ContactSection() {
                 value={form.name}
                 onChange={handleChange}
                 required
-                className="w-full bg-luxury-black/35 border border-white/5 focus:border-luxury-gold/50 px-4 py-3 text-sm text-luxury-cream focus:outline-none transition-colors rounded"
+                className="luxury-input-field"
               />
             </div>
             
-            <div className="relative group">
-              <label className="block text-[9px] uppercase tracking-[0.2em] text-luxury-silver mb-2 font-semibold">
+            <div className="luxury-form-group">
+              <label className="luxury-label">
                 Email Address
               </label>
               <input
@@ -76,12 +76,12 @@ export default function ContactSection() {
                 value={form.email}
                 onChange={handleChange}
                 required
-                className="w-full bg-luxury-black/35 border border-white/5 focus:border-luxury-gold/50 px-4 py-3 text-sm text-luxury-cream focus:outline-none transition-colors rounded"
+                className="luxury-input-field"
               />
             </div>
 
-            <div className="relative group">
-              <label className="block text-[9px] uppercase tracking-[0.2em] text-luxury-silver mb-2 font-semibold">
+            <div className="luxury-form-group">
+              <label className="luxury-label">
                 Message Detail
               </label>
               <textarea
@@ -89,8 +89,7 @@ export default function ContactSection() {
                 value={form.message}
                 onChange={handleChange}
                 required
-                rows={4}
-                className="w-full bg-luxury-black/35 border border-white/5 focus:border-luxury-gold/50 px-4 py-3 text-sm text-luxury-cream focus:outline-none transition-colors resize-none rounded"
+                className="luxury-textarea-field"
               />
             </div>
 

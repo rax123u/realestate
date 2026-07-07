@@ -77,12 +77,12 @@ export default function RegisterPage() {
       </div>
 
       {/* Form Panel (Right) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-8 md:px-16 py-12 relative z-20 overflow-y-auto">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 md:px-12 py-12 relative z-20 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-xl space-y-8 my-auto"
+          className="luxury-form-wrapper space-y-8 my-auto"
         >
           <div className="text-center lg:text-left">
             <Link to="/" className="inline-block lg:hidden text-2xl font-medium tracking-[0.3em] uppercase text-luxury-cream mb-8">
@@ -92,9 +92,9 @@ export default function RegisterPage() {
             <p className="text-luxury-silver/80 text-[10px] mt-3 uppercase tracking-[0.25em] font-semibold">Join the Aurelius estate network</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6 p-12 md:p-14 border border-white/5 bg-luxury-charcoal/40 rounded-lg shadow-2xl backdrop-blur-md">
-            <div>
-              <label className="block text-[10px] uppercase tracking-[0.2em] text-luxury-silver mb-3.5 font-semibold">Account Type</label>
+          <form onSubmit={handleSubmit} className="luxury-form-card">
+            <div className="luxury-form-group">
+              <label className="luxury-label">Account Type</label>
               <div className="grid grid-cols-1 gap-2.5">
                 {ROLES.map((role) => (
                   <label
@@ -123,8 +123,8 @@ export default function RegisterPage() {
             </div>
 
             {['name', 'email', 'password', 'password_confirmation'].map((field) => (
-              <div key={field}>
-                <label className="block text-[10px] uppercase tracking-[0.2em] text-luxury-silver mb-2 font-semibold">
+              <div key={field} className="luxury-form-group">
+                <label className="luxury-label">
                   {field === 'password_confirmation' ? 'Confirm Password' : field.charAt(0).toUpperCase() + field.slice(1)}
                 </label>
                 <input
@@ -132,7 +132,7 @@ export default function RegisterPage() {
                   value={form[field]}
                   onChange={(e) => setForm({ ...form, [field]: e.target.value })}
                   required
-                  className="w-full bg-luxury-black/35 border border-white/5 focus:border-luxury-gold/50 px-5 py-4 text-luxury-cream text-sm focus:outline-none transition-colors rounded placeholder-luxury-silver/20"
+                  className="luxury-input-field"
                   placeholder={field === 'password_confirmation' ? '••••••••' : field === 'email' ? 'name@example.com' : `Your ${field}`}
                 />
               </div>

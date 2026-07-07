@@ -60,12 +60,12 @@ export default function LoginPage() {
       </div>
 
       {/* Form Panel (Right) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-8 md:px-16 py-12 relative z-20">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 md:px-12 py-12 relative z-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-xl space-y-10"
+          className="luxury-form-wrapper space-y-10"
         >
           <div className="text-center lg:text-left">
             <Link to="/" className="inline-block lg:hidden text-2xl font-medium tracking-[0.3em] uppercase text-luxury-cream mb-8">
@@ -75,22 +75,22 @@ export default function LoginPage() {
             <p className="text-luxury-silver/80 text-[10px] mt-3 uppercase tracking-[0.25em] font-semibold">Access your luxury portfolio dashboard</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8 p-12 md:p-14 border border-white/5 bg-luxury-charcoal/40 rounded-lg shadow-2xl backdrop-blur-md">
-            <div>
-              <label className="block text-[10px] uppercase tracking-[0.2em] text-luxury-silver mb-3 font-semibold">Email Address</label>
+          <form onSubmit={handleSubmit} className="luxury-form-card">
+            <div className="luxury-form-group">
+              <label className="luxury-label">Email Address</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 required
-                className="w-full bg-luxury-black/35 border border-white/5 focus:border-luxury-gold/50 px-5 py-4 text-luxury-cream text-sm focus:outline-none transition-colors rounded placeholder-luxury-silver/20"
+                className="luxury-input-field"
                 placeholder="email@example.com"
               />
             </div>
             
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <label className="block text-[10px] uppercase tracking-[0.2em] text-luxury-silver font-semibold">Password</label>
+            <div className="luxury-form-group">
+              <div className="flex justify-between items-center">
+                <label className="luxury-label">Password</label>
                 <a href="#" className="text-[10px] uppercase tracking-wider text-luxury-gold hover:underline">Forgot?</a>
               </div>
               <input
@@ -98,7 +98,7 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 required
-                className="w-full bg-luxury-black/35 border border-white/5 focus:border-luxury-gold/50 px-5 py-4 text-luxury-cream text-sm focus:outline-none transition-colors rounded placeholder-luxury-silver/20"
+                className="luxury-input-field"
                 placeholder="••••••••"
               />
             </div>
