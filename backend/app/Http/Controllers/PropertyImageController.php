@@ -99,10 +99,13 @@ class PropertyImageController extends Controller
             }
         }
 
-        $path = $file->store('properties', 'public');
+        $imageData = file_get_contents($file->getRealPath());
+        $base64 = base64_encode($imageData);
+        $mimeType = $file->getMimeType();
+        $url = 'data:' . $mimeType . ';base64,' . $base64;
 
         return [
-            'url' => Storage::url($path),
+            'url' => $url,
             'public_id' => null,
         ];
     }
