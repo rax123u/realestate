@@ -48,5 +48,5 @@ RUN echo "upload_max_filesize = 25M\npost_max_size = 25M\nmemory_limit = 256M" >
 # Expose Railway port
 EXPOSE 8080
 
-# Start Laravel (running migrations first)
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+# Start Laravel (running migrations and retroactively compressing existing images first)
+CMD php artisan migrate --force && php artisan images:compress && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}

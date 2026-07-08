@@ -99,7 +99,7 @@ class PropertyImageController extends Controller
             }
         }
 
-        $imageData = file_get_contents($file->getRealPath());
+        $imageData = $this->compressImage($file->getRealPath(), $file->getMimeType());
         $base64 = base64_encode($imageData);
         $mimeType = $file->getMimeType();
         $url = 'data:' . $mimeType . ';base64,' . $base64;
@@ -108,6 +108,79 @@ class PropertyImageController extends Controller
             'url' => $url,
             'public_id' => null,
         ];
+    }
+
+    private function compressImage($filePath, $mimeType): string
+    {
+        // Get original dimensions
+        list($width, $height) = @getimagesize($filePath);
+        if (!$width || !$height) {
+            return file_get_contents($filePath);
+        }
+
+        // Set max dimensions for web optimization
+        $maxDim = 1200;
+        $newWidth = $width;
+        $newHeight = $height;
+
+        if ($width > $maxDim || $height > $maxDim) {
+            if ($width > $height) {
+                $newWidth = $maxDim;
+                $newHeight = (int) ($height * ($maxDim / $width));
+            } else {
+                $newHeight = $maxDim;
+                $newWidth = (int) ($width * ($maxDim / $height));
+            }
+        }
+
+        // Create image resource based on mime type
+        $srcImage = null;
+        if ($mimeType === 'image/jpeg' || $mimeType === 'image/jpg') {
+            $srcImage = @imagecreatefromjpeg($filePath);
+        } elseif ($mimeType === 'image/png') {
+            $srcImage = @imagecreatefrompng($filePath);
+        } elseif ($mimeType === 'image/webp') {
+            $srcImage = @imagecreatefromwebp($filePath);
+        } elseif ($mimeType === 'image/gif') {
+            $srcImage = @imagecreatefromgif($filePath);
+        }
+
+        if (!$srcImage) {
+            return file_get_contents($filePath);
+        }
+
+        // Create new true color destination image
+        $dstImage = imagecreatetruecolor($newWidth, $newHeight);
+        
+        // Preserve transparency for PNG and WebP
+        if ($mimeType === 'image/png' || $mimeType === 'image/webp') {
+            imagealphablending($dstImage, false);
+            imagesavealpha($dstImage, true);
+            $transparent = imagecolorallocatealpha($dstImage, 255, 255, 255, 127);
+            imagefilledrectangle($dstImage, 0, 0, $newWidth, $newHeight, $transparent);
+        }
+
+        // Resize and resample
+        imagecopyresampled($dstImage, $srcImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+        // Compress
+        ob_start();
+        if ($mimeType === 'image/png') {
+            imagepng($dstImage, null, 7); // 7 is a good level
+        } elseif ($mimeType === 'image/webp') {
+            imagewebp($dstImage, null, 70); // 70% quality
+        } elseif ($mimeType === 'image/gif') {
+            imagegif($dstImage);
+        } else {
+            imagejpeg($dstImage, null, 70); // 70% quality for jpeg
+        }
+        $compressedData = ob_get_clean();
+
+        // Free resources
+        imagedestroy($srcImage);
+        imagedestroy($dstImage);
+
+        return $compressedData;
     }
 
     private function deleteFromCloudinary(string $publicId): void

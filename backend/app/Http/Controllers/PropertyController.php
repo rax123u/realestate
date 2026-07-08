@@ -10,7 +10,7 @@ class PropertyController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Property::with('images');
+        $query = Property::query();
 
         if ($request->filled('city')) {
             $query->where('city', 'like', '%' . $request->city . '%');
@@ -77,8 +77,7 @@ class PropertyController extends Controller
 
     public function myListings(Request $request): JsonResponse
     {
-        $properties = Property::with('images')
-            ->where('user_id', $request->user()->id)
+        $properties = Property::where('user_id', $request->user()->id)
             ->latest()
             ->get()
             ->map(fn ($property) => $this->formatProperty($property));
@@ -88,8 +87,7 @@ class PropertyController extends Controller
 
     public function featured(): JsonResponse
     {
-        $properties = Property::with('images')
-            ->where('featured', true)
+        $properties = Property::where('featured', true)
             ->where('status', 'active')
             ->latest()
             ->get()
@@ -100,8 +98,7 @@ class PropertyController extends Controller
 
     public function showcase(): JsonResponse
     {
-        $properties = Property::with('images')
-            ->where('showcase', true)
+        $properties = Property::where('showcase', true)
             ->where('status', 'active')
             ->latest()
             ->get()
@@ -228,11 +225,11 @@ class PropertyController extends Controller
             'featured' => $property->featured,
             'showcase' => $property->showcase,
             'user_id' => $property->user_id,
-            'images' => $property->images->map(fn ($img) => [
+            'images' => $property->relationLoaded('images') ? $property->images->map(fn ($img) => [
                 'id' => $img->id,
                 'url' => $img->url,
                 'is_primary' => $img->is_primary,
-            ]),
+            ]) : [],
             'created_at' => $property->created_at,
             'updated_at' => $property->updated_at,
         ];
