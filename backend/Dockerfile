@@ -7,9 +7,13 @@ RUN apt-get update && apt-get install -y \
     unzip \
     zip \
     libpng-dev \
+    libjpeg-dev \
+    libwebp-dev \
+    libfreetype6-dev \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install \
         pdo_mysql \
         mbstring \
@@ -48,5 +52,5 @@ RUN echo "upload_max_filesize = 25M\npost_max_size = 25M\nmemory_limit = 256M" >
 # Expose Railway port
 EXPOSE 8080
 
-# Start Laravel (clearing cache, running migrations and retroactively compressing existing images first)
-CMD php artisan optimize:clear && php artisan migrate --force && php artisan images:compress && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+# Start Laravel (clearing cache and running migrations on deploy)
+CMD php artisan optimize:clear && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
