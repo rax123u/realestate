@@ -1,20 +1,47 @@
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Button from '../components/ui/Button';
-import { propertyAPI, resolveImageUrl } from '../api';
-import { formatPrice } from '../data/fallback';
+import PropertyCard from '../components/ui/PropertyCard';
+import { propertyAPI } from '../api';
+import { MEDIA } from '../data/fallback';
+import useFavorites from '../hooks/useFavorites';
+
+function filterFallback(params) {
+  const list = MEDIA.properties.filter((property) => {
+    if (params.search) {
+      const query = params.search.toLowerCase();
+      const haystack = `${property.title} ${property.location} ${property.city || ''}`.toLowerCase();
+      if (!haystack.includes(query)) return false;
+    }
+    if (params.city && !`${property.city || ''} ${property.location || ''}`.toLowerCase().includes(params.city.toLowerCase())) {
+      return false;
+    }
+    if (params.listing_type && property.listing_type !== params.listing_type) return false;
+    if (params.property_type && property.property_type !== params.property_type) return false;
+    if (params.min_price && property.price < Number(params.min_price)) return false;
+    if (params.max_price && property.price > Number(params.max_price)) return false;
+    if (params.bedrooms && (property.bedrooms || 0) < Number(params.bedrooms)) return false;
+    return true;
+  });
+
+  return [...list].sort((a, b) => {
+    if (params.sort === 'price_asc') return a.price - b.price;
+    if (params.sort === 'price_desc') return b.price - a.price;
+    if (params.sort === 'area_desc') return (b.area || 0) - (a.area || 0);
+    return 0;
+  });
+}
 
 const LISTING_TYPES = [
-  { value: '', label: 'All Listings' },
-  { value: 'sale', label: 'For Sale' },
-  { value: 'rent', label: 'For Rent' },
+  { value: '', label: 'All listings' },
+  { value: 'sale', label: 'For sale' },
+  { value: 'rent', label: 'For rent' },
 ];
 
 const PROPERTY_TYPES = [
-  { value: '', label: 'All Types' },
+  { value: '', label: 'All types' },
   { value: 'house', label: 'House' },
   { value: 'apartment', label: 'Apartment' },
   { value: 'villa', label: 'Villa' },
@@ -23,10 +50,10 @@ const PROPERTY_TYPES = [
 ];
 
 const SORT_OPTIONS = [
-  { value: 'latest', label: 'Newest Releases' },
-  { value: 'price_asc', label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
-  { value: 'area_desc', label: 'Largest Area' },
+  { value: 'latest', label: 'Newest' },
+  { value: 'price_asc', label: 'Price: low to high' },
+  { value: 'price_desc', label: 'Price: high to low' },
+  { value: 'area_desc', label: 'Largest area' },
 ];
 
 const emptyFilters = {
@@ -42,9 +69,8 @@ const emptyFilters = {
   sort: 'latest',
 };
 
-export default function PropertiesPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [filters, setFilters] = useState(() => ({
+function filtersFromParams(searchParams) {
+  return {
     ...emptyFilters,
     search: searchParams.get('search') || '',
     city: searchParams.get('city') || '',
@@ -56,7 +82,14 @@ export default function PropertiesPage() {
     max_area: searchParams.get('max_area') || '',
     bedrooms: searchParams.get('bedrooms') || '',
     sort: searchParams.get('sort') || 'latest',
-  }));
+  };
+}
+
+export default function PropertiesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { isSaved, toggle, user } = useFavorites();
+  const urlKey = searchParams.toString();
+  const [filters, setFilters] = useState(() => filtersFromParams(searchParams));
   const [properties, setProperties] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -77,260 +110,151 @@ export default function PropertiesPage() {
         total: data.total,
       });
     } catch {
-      setProperties([]);
-      setPagination(null);
+      const fallback = filterFallback(params);
+      setProperties(fallback);
+      setPagination({ current: 1, last: 1, total: fallback.length });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProperties(filters, page);
-  }, [page]);
+    const next = filtersFromParams(searchParams);
+    setFilters(next);
+    fetchProperties(next, page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlKey, page]);
+
+  const resultLabel = useMemo(() => {
+    const total = pagination?.total ?? properties.length;
+    return `${total} ${total === 1 ? 'residence' : 'residences'}`;
+  }, [pagination, properties.length]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setPage(1);
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.set(key, value);
     });
+    setPage(1);
     setSearchParams(params);
-    fetchProperties(filters, 1);
   };
 
   const handleReset = () => {
     setFilters(emptyFilters);
-    setSearchParams({});
     setPage(1);
-    fetchProperties(emptyFilters, 1);
+    setSearchParams({});
   };
-
-  const inputClass =
-    'w-full bg-luxury-black/40 border border-white/5 px-4 py-3 text-xs text-luxury-cream focus:border-luxury-gold/50 focus:outline-none transition-colors rounded';
 
   return (
     <>
       <Navbar />
-      <main className="pt-32 pb-24 bg-luxury-black min-h-screen relative overflow-hidden">
-        {/* Glow orbs background decoration */}
-        <div className="absolute top-[10%] right-[5%] w-[400px] h-[400px] rounded-full bg-luxury-gold/5 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[20%] left-[-10%] w-[350px] h-[350px] rounded-full bg-luxury-gold/5 blur-[100px] pointer-events-none" />
+      <main className="page-shell">
+        <div className="site-wrap">
+          <p className="eyebrow">The collection</p>
+          <h1 className="section-title" style={{ marginBottom: '0.75rem' }}>Find a residence.</h1>
+          <p className="lede" style={{ marginBottom: '2.25rem' }}>
+            Filter by place, price, and typology. Every listing is specified so a serious buyer can decide.
+          </p>
 
-        <div className="w-full max-w-[92%] mx-auto px-6 relative z-10">
-          <div className="mb-12">
-            <p className="text-subhead mb-2">Browse Listings</p>
-            <h1 className="text-3.5xl md:text-5xl font-serif font-light text-luxury-cream">Find Your Property</h1>
-          </div>
-
-          {/* Search/Filter Panel */}
-          <form onSubmit={handleSearch} className="p-8 border border-white/5 bg-luxury-charcoal/40 backdrop-blur-md rounded-lg shadow-xl mb-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-              <div>
-                <label className="block text-[9px] uppercase tracking-[0.15em] text-luxury-silver mb-2 font-semibold">Search keyword</label>
-                <input
-                  placeholder="Title, location..."
-                  value={filters.search}
-                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className="block text-[9px] uppercase tracking-[0.15em] text-luxury-silver mb-2 font-semibold">City</label>
-                <input
-                  placeholder="City name"
-                  value={filters.city}
-                  onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className="block text-[9px] uppercase tracking-[0.15em] text-luxury-silver mb-2 font-semibold">Listing Status</label>
-                <select
-                  value={filters.listing_type}
-                  onChange={(e) => setFilters({ ...filters, listing_type: e.target.value })}
-                  className={inputClass}
-                >
-                  {LISTING_TYPES.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[9px] uppercase tracking-[0.15em] text-luxury-silver mb-2 font-semibold">Property Type</label>
-                <select
-                  value={filters.property_type}
-                  onChange={(e) => setFilters({ ...filters, property_type: e.target.value })}
-                  className={inputClass}
-                >
-                  {PROPERTY_TYPES.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[9px] uppercase tracking-[0.15em] text-luxury-silver mb-2 font-semibold">Minimum Price</label>
-                <input
-                  type="number"
-                  placeholder="Min Price"
-                  value={filters.min_price}
-                  onChange={(e) => setFilters({ ...filters, min_price: e.target.value })}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className="block text-[9px] uppercase tracking-[0.15em] text-luxury-silver mb-2 font-semibold">Maximum Price</label>
-                <input
-                  type="number"
-                  placeholder="Max Price"
-                  value={filters.max_price}
-                  onChange={(e) => setFilters({ ...filters, max_price: e.target.value })}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className="block text-[9px] uppercase tracking-[0.15em] text-luxury-silver mb-2 font-semibold">Min Area (sq ft)</label>
-                <input
-                  type="number"
-                  placeholder="Min Sq Ft"
-                  value={filters.min_area}
-                  onChange={(e) => setFilters({ ...filters, min_area: e.target.value })}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className="block text-[9px] uppercase tracking-[0.15em] text-luxury-silver mb-2 font-semibold">Sort Order</label>
-                <select
-                  value={filters.sort}
-                  onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
-                  className={inputClass}
-                >
-                  {SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap gap-4 items-center border-t border-white/5 pt-6">
-              <Button type="submit" className="shadow-[0_0_15px_var(--color-luxury-gold-glow)]">Apply Filters</Button>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="text-xs uppercase tracking-widest text-luxury-silver hover:text-luxury-gold font-semibold transition-colors cursor-pointer px-4"
-              >
-                Reset Filters
+          <form onSubmit={handleSearch} className="filter-form editorial-panel" style={{ padding: '1.35rem' }}>
+            <label className="luxury-label">
+              Keyword
+              <input className="field" value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} placeholder="Title or location" />
+            </label>
+            <label className="luxury-label">
+              City
+              <input className="field" value={filters.city} onChange={(e) => setFilters({ ...filters, city: e.target.value })} placeholder="City" />
+            </label>
+            <label className="luxury-label">
+              Status
+              <select className="field" value={filters.listing_type} onChange={(e) => setFilters({ ...filters, listing_type: e.target.value })}>
+                {LISTING_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+            <label className="luxury-label">
+              Type
+              <select className="field" value={filters.property_type} onChange={(e) => setFilters({ ...filters, property_type: e.target.value })}>
+                {PROPERTY_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+            <label className="luxury-label">
+              Min price
+              <input className="field" type="number" min="0" value={filters.min_price} onChange={(e) => setFilters({ ...filters, min_price: e.target.value })} placeholder="0" />
+            </label>
+            <label className="luxury-label">
+              Max price
+              <input className="field" type="number" min="0" value={filters.max_price} onChange={(e) => setFilters({ ...filters, max_price: e.target.value })} placeholder="Any" />
+            </label>
+            <label className="luxury-label">
+              Bedrooms
+              <input className="field" type="number" min="0" value={filters.bedrooms} onChange={(e) => setFilters({ ...filters, bedrooms: e.target.value })} placeholder="Any" />
+            </label>
+            <label className="luxury-label">
+              Sort
+              <select className="field" value={filters.sort} onChange={(e) => setFilters({ ...filters, sort: e.target.value })}>
+                {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', gridColumn: '1 / -1' }}>
+              <Button type="submit">Apply filters</Button>
+              <button type="button" onClick={handleReset} className="text-link" style={{ background: 'none', border: 0, cursor: 'pointer' }}>
+                Reset
               </button>
             </div>
           </form>
 
           {loading ? (
-            <div className="flex justify-center py-24">
-              <div className="w-10 h-10 border border-luxury-gold border-t-transparent rounded-full animate-spin" />
+            <div className="skeleton-grid" aria-hidden="true">
+              {[0, 1, 2].map((i) => <div key={i} className="skeleton-card" />)}
             </div>
           ) : properties.length === 0 ? (
-            <div className="glass-panel py-20 text-center rounded-lg border border-white/5">
-              <p className="text-luxury-silver/80 text-sm font-light">No properties match your search criteria.</p>
-              <button onClick={handleReset} className="text-xs uppercase tracking-widest text-luxury-gold hover:underline mt-4">Reset all filters</button>
+            <div className="empty-state">
+              <p className="section-title" style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>Nothing matches.</p>
+              <p className="lede" style={{ margin: '0 auto 1.5rem' }}>Try a broader city, type, or price range.</p>
+              <button type="button" onClick={handleReset} className="text-link" style={{ background: 'none', border: 0, cursor: 'pointer' }}>
+                Clear filters
+              </button>
             </div>
           ) : (
             <>
-              <p className="text-xs uppercase tracking-widest text-luxury-silver/60 mb-6 font-semibold">
-                {pagination?.total ?? properties.length} properties discovered
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {properties.map((property, idx) => {
-                  const imageUrl = property.image || property.primary_image;
-                  return (
-                    <motion.div
-                      key={property.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, delay: Math.min(idx * 0.05, 0.3) }}
-                      className="group glass-card overflow-hidden rounded-lg flex flex-col h-full"
-                    >
-                      <Link to={`/properties/${property.id}`} className="block relative aspect-[4/3] overflow-hidden">
-                        {/* Float Status Badge */}
-                        <div className="absolute top-4 left-4 z-20 px-2.5 py-1 bg-luxury-black/60 border border-white/10 backdrop-blur-md rounded">
-                          <span className="text-[8px] uppercase tracking-[0.2em] font-semibold text-luxury-gold">
-                            {property.listing_type === 'rent' ? 'For Rent' : 'For Sale'}
-                          </span>
-                        </div>
-
-                        <img
-                          src={resolveImageUrl(imageUrl)}
-                          alt={property.title}
-                          className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-[1000ms]"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-luxury-black/70 via-transparent to-transparent pointer-events-none" />
-                      </Link>
-
-                      <div className="p-6 flex flex-col flex-grow justify-between">
-                        <div>
-                          <span className="text-[8px] font-semibold uppercase tracking-[0.2em] text-luxury-gold">
-                            {property.location}
-                          </span>
-                          <Link to={`/properties/${property.id}`} className="block mt-1.5 mb-2 group/title">
-                            <h3 className="text-lg md:text-xl font-serif text-luxury-cream leading-tight font-light group-hover/title:text-luxury-gold transition-colors duration-300">
-                              {property.title}
-                            </h3>
-                          </Link>
-                          <p className="text-base text-luxury-gold font-light tracking-wide">
-                            {formatPrice(property.price)}
-                          </p>
-                        </div>
-
-                        {/* Specs grid */}
-                        <div className="grid grid-cols-3 gap-2 border-t border-white/5 pt-4 mt-6 text-center">
-                          <div className="flex flex-col items-center">
-                            <span className="text-sm font-semibold text-luxury-cream">{property.bedrooms}</span>
-                            <span className="text-[8px] uppercase tracking-[0.15em] text-luxury-silver mt-0.5">Beds</span>
-                          </div>
-                          <div className="flex flex-col items-center border-x border-white/5">
-                            <span className="text-sm font-semibold text-luxury-cream">{property.bathrooms}</span>
-                            <span className="text-[8px] uppercase tracking-[0.15em] text-luxury-silver mt-0.5">Baths</span>
-                          </div>
-                          <div className="flex flex-col items-center">
-                            <span className="text-sm font-semibold text-luxury-cream">
-                              {property.area?.toLocaleString()}
-                            </span>
-                            <span className="text-[8px] uppercase tracking-[0.15em] text-luxury-silver mt-0.5">Sq Ft</span>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+              <p className="eyebrow">{resultLabel}</p>
+              <div className="property-grid">
+                {properties.map((property) => (
+                  <PropertyCard
+                    key={property.id}
+                    property={property}
+                    saved={isSaved(property.id)}
+                    signedIn={Boolean(user)}
+                    onToggleSave={toggle}
+                  />
+                ))}
               </div>
-
-              {/* Pagination controls */}
               {pagination && pagination.last > 1 && (
-                <div className="flex justify-center items-center gap-4 mt-16 border-t border-white/5 pt-8">
-                  <button
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '3rem', alignItems: 'center' }}>
+                  <Button
+                    variant="outline"
                     disabled={page <= 1}
                     onClick={() => {
                       setPage((p) => p - 1);
-                      if (window.lenis) window.lenis.scrollTo(0);
+                      window.lenis ? window.lenis.scrollTo(0) : window.scrollTo(0, 0);
                     }}
-                    className="px-5 py-2.5 text-[10px] uppercase tracking-wider border border-white/10 rounded hover:border-luxury-gold disabled:opacity-30 disabled:hover:border-white/10 cursor-pointer transition-colors"
                   >
                     Previous
-                  </button>
-                  <span className="text-[10px] uppercase tracking-widest text-luxury-silver font-semibold">
+                  </Button>
+                  <span className="eyebrow" style={{ margin: 0 }}>
                     Page {pagination.current} of {pagination.last}
                   </span>
-                  <button
+                  <Button
+                    variant="outline"
                     disabled={page >= pagination.last}
                     onClick={() => {
                       setPage((p) => p + 1);
-                      if (window.lenis) window.lenis.scrollTo(0);
+                      window.lenis ? window.lenis.scrollTo(0) : window.scrollTo(0, 0);
                     }}
-                    className="px-5 py-2.5 text-[10px] uppercase tracking-wider border border-white/10 rounded hover:border-luxury-gold disabled:opacity-30 disabled:hover:border-white/10 cursor-pointer transition-colors"
                   >
                     Next
-                  </button>
+                  </Button>
                 </div>
               )}
             </>

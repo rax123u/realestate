@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+const apiBase = import.meta.env.DEV
+  ? 'http://localhost:8000/api'
+  : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api');
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: apiBase,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -10,6 +14,14 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    if (typeof config.headers?.delete === 'function') {
+      config.headers.delete('Content-Type');
+    } else {
+      delete config.headers['Content-Type'];
+    }
+  }
+
   const token = localStorage.getItem('auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -23,7 +35,7 @@ export const resolveImageUrl = (path) => {
   if (!path || typeof path !== 'string') return '';
   if (path.startsWith('blob:') || path.startsWith('data:')) return path;
 
-  const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+  const apiURL = apiBase;
   // Get backend domain (strip /api or /api/ if present)
   const base = apiURL.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
@@ -61,10 +73,7 @@ export const propertyAPI = {
   create: (data) => api.post('/properties', data),
   update: (id, data) => api.put(`/properties/${id}`, data),
   delete: (id) => api.delete(`/properties/${id}`),
-  uploadImage: (id, formData) =>
-    api.post(`/properties/${id}/images`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+  uploadImage: (id, formData) => api.post(`/properties/${id}/images`, formData),
   deleteImage: (propertyId, imageId) =>
     api.delete(`/properties/${propertyId}/images/${imageId}`),
 };

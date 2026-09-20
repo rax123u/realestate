@@ -1,9 +1,9 @@
-import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const variants = {
   primary: 'btn-luxury-solid',
   outline: 'btn-luxury',
-  ghost: 'text-luxury-cream hover:text-luxury-gold tracking-[0.2em] uppercase font-semibold text-[11px]',
+  ghost: 'btn-ghost',
 };
 
 export default function Button({
@@ -14,48 +14,29 @@ export default function Button({
   type = 'button',
   disabled = false,
   href,
+  to,
 }) {
-  const base =
-    'inline-flex items-center justify-center px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.2em] rounded transition-all duration-400 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
+  const classes = `btn-base ${variants[variant] || variants.primary} ${className}`;
 
-  const classes = `${base} ${variants[variant]} ${className}`;
+  if (to) {
+    return (
+      <Link to={to} className={classes}>
+        {children}
+      </Link>
+    );
+  }
 
   if (href) {
-    if (href.startsWith('#')) {
-      return (
-        <motion.a
-          href={href}
-          className={classes}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          {children}
-        </motion.a>
-      );
-    }
-    // External or React Router handling can be regular link
     return (
-      <motion.a
-        href={href}
-        className={classes}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-      >
+      <a href={href} className={classes}>
         {children}
-      </motion.a>
+      </a>
     );
   }
 
   return (
-    <motion.button
-      type={type}
-      className={classes}
-      onClick={onClick}
-      disabled={disabled}
-      whileHover={{ scale: disabled ? 1 : 1.02 }}
-      whileTap={{ scale: disabled ? 1 : 0.98 }}
-    >
+    <button type={type} className={classes} onClick={onClick} disabled={disabled}>
       {children}
-    </motion.button>
+    </button>
   );
 }

@@ -1,38 +1,52 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
-import { motion } from 'framer-motion';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Button from '../components/ui/Button';
+import PropertyCard from '../components/ui/PropertyCard';
+import OptimizedImage from '../components/ui/OptimizedImage';
 import { propertyAPI, inquiryAPI, resolveImageUrl } from '../api';
 import { MEDIA, formatPrice } from '../data/fallback';
 import { useAuth } from '../context/AuthContext';
-
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
+import useFavorites from '../hooks/useFavorites';
+import { propertyImage } from '../lib/images';
 
 export default function PropertyDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { isSaved, toggle } = useFavorites();
   const [property, setProperty] = useState(null);
+  const [similar, setSimilar] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [inquiryForm, setInquiryForm] = useState({ name: '', email: '', message: '' });
+  const [inquiryForm, setInquiryForm] = useState({ name: '', email: '', message: '', viewing: true });
   const [inquiryStatus, setInquiryStatus] = useState({ type: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
+    setLoading(true);
+    setActiveImage(0);
+    setInquiryStatus({ type: '', message: '' });
     propertyAPI
       .get(id)
       .then(({ data }) => setProperty(data))
       .catch(() => {
         const fallback = MEDIA.properties.find((p) => p.id === Number(id));
-        setProperty(fallback || MEDIA.properties[0]);
+        setProperty(fallback || null);
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    propertyAPI
+      .list({ per_page: 4, city: property?.city })
+      .then(({ data }) => {
+        const list = data.data || data || [];
+        setSimilar(list.filter((item) => String(item.id) !== String(id)).slice(0, 3));
+      })
+      .catch(() => setSimilar(MEDIA.properties.filter((p) => String(p.id) !== String(id)).slice(0, 3)));
+  }, [id, property?.city]);
 
   useEffect(() => {
     if (user) {
@@ -51,13 +65,17 @@ export default function PropertyDetailPage() {
 
     try {
       await inquiryAPI.create({
-        ...inquiryForm,
+        name: inquiryForm.name,
+        email: inquiryForm.email,
+        message: inquiryForm.viewing
+          ? `Schedule viewing request for ${property.title}.\n\n${inquiryForm.message}`
+          : inquiryForm.message,
         property_id: Number(id),
       });
-      setInquiryStatus({ type: 'success', message: 'Your inquiry has been sent. We will contact you shortly.' });
-      setInquiryForm({ name: user?.name || '', email: user?.email || '', message: '' });
+      setInquiryStatus({ type: 'success', message: 'Enquiry sent. We will contact you shortly.' });
+      setInquiryForm({ name: user?.name || '', email: user?.email || '', message: '', viewing: true });
     } catch {
-      setInquiryStatus({ type: 'error', message: 'Failed to send inquiry. Please try again.' });
+      setInquiryStatus({ type: 'error', message: 'Failed to send enquiry. Please try again.' });
     } finally {
       setSubmitting(false);
     }
@@ -65,24 +83,36 @@ export default function PropertyDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-luxury-black flex items-center justify-center">
-        <div className="w-10 h-10 border border-luxury-gold border-t-transparent rounded-full animate-spin" />
-      </div>
+      <>
+        <Navbar />
+        <main className="page-shell">
+          <div className="site-wrap" style={{ display: 'flex', justifyContent: 'center', padding: '6rem 0' }}>
+            <div className="spinner" aria-label="Loading residence" />
+          </div>
+        </main>
+        <Footer />
+      </>
     );
   }
 
   if (!property) {
     return (
-      <div className="min-h-screen bg-luxury-black flex flex-col items-center justify-center gap-4">
-        <p className="text-luxury-silver font-light">Property not found</p>
-        <Link to="/properties" className="text-luxury-gold text-xs uppercase tracking-widest hover:underline">Browse Properties</Link>
-      </div>
+      <>
+        <Navbar />
+        <main className="page-shell">
+          <div className="site-wrap empty-state">
+            <h1 className="section-title" style={{ fontSize: '2.4rem', marginBottom: '1rem' }}>Property not found.</h1>
+            <Link to="/properties" className="text-link">Browse listings</Link>
+          </div>
+        </main>
+        <Footer />
+      </>
     );
   }
 
   const images = property.images?.length
-    ? property.images.map(img => ({ ...img, url: resolveImageUrl(img.url) }))
-    : [{ url: resolveImageUrl(property.image || property.primary_image) }];
+    ? property.images.map((img) => resolveImageUrl(img.url))
+    : [resolveImageUrl(propertyImage(property))].filter(Boolean);
 
   const amenities = property.amenities?.length
     ? property.amenities
@@ -95,172 +125,193 @@ export default function PropertyDetailPage() {
     expired: 'Expired',
   };
 
+  const agent = property.agent || MEDIA.agent;
+  const main = images[activeImage] || images[0];
+  const thumbs = images.filter((_, i) => i !== activeImage).slice(0, 2);
+
   return (
     <>
       <Navbar />
-      <main className="pt-32 pb-24 bg-luxury-black min-h-screen relative overflow-hidden">
-        {/* Glow decoration */}
-        <div className="absolute top-[10%] right-[-5%] w-[400px] h-[400px] rounded-full bg-luxury-gold/5 blur-[120px] pointer-events-none" />
+      <main className="page-shell">
+        <div className="site-wrap">
+          <Link to="/properties" className="text-link" style={{ display: 'inline-block', marginBottom: '1.75rem' }}>
+            Back to listings
+          </Link>
 
-        <div className="w-full max-w-[92%] mx-auto px-6 relative z-10 font-sans">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <Link to="/properties" className="text-[10px] uppercase tracking-[0.25em] text-luxury-silver hover:text-luxury-gold mb-8 inline-flex items-center gap-2 group transition-colors">
-              <span className="group-hover:-translate-x-1.5 transition-transform duration-300">&larr;</span> Back to listings
-            </Link>
-
-            {/* Main Immersive Slider */}
-            <div className="border border-white/5 rounded-lg overflow-hidden shadow-2xl mb-16">
-              <Swiper
-                modules={[Navigation, Pagination]}
-                navigation
-                pagination={{ clickable: true }}
-                className="aspect-[21/10] md:aspect-[21/9] w-full"
-              >
-                {images.map((img, i) => (
-                  <SwiperSlide key={i}>
-                    <img 
-                      src={img.url || img} 
-                      alt={`${property.title} ${i + 1}`} 
-                      className="w-full h-full object-cover" 
-                      loading="lazy"
-                    />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
+          <div className={`detail-gallery ${images.length < 2 ? 'is-single' : ''}`}>
+            <button
+              type="button"
+              className="detail-gallery__main"
+              onClick={() => images.length > 1 && setActiveImage((i) => (i + 1) % images.length)}
+              aria-label="Show next photograph"
+              style={{ border: 0, padding: 0, cursor: images.length > 1 ? 'pointer' : 'default' }}
+            >
+              {main && (
+                <OptimizedImage src={main} alt={`${property.title}, photograph ${activeImage + 1}`} width={1600} eager sizes="(max-width: 900px) 100vw, 70vw" />
+              )}
+            </button>
+            <div className="detail-gallery__side">
+              {thumbs.map((url, i) => {
+                const index = images.indexOf(url);
+                return (
+                  <button
+                    key={url + i}
+                    type="button"
+                    onClick={() => setActiveImage(index)}
+                    aria-label={`View photograph ${index + 1}`}
+                    style={{ border: 0, padding: 0, cursor: 'pointer', minHeight: '30vh' }}
+                  >
+                    <OptimizedImage src={url} alt="" width={800} sizes="30vw" />
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-              
-              {/* Content Panel (Left) */}
-              <div className="lg:col-span-8 space-y-8">
-                <div>
-                  <div className="flex flex-wrap gap-2.5 mb-4">
-                    <span className="text-[9px] uppercase tracking-[0.2em] font-semibold text-luxury-gold bg-luxury-gold/10 px-2.5 py-1 rounded">
-                      {property.listing_type === 'rent' ? 'For Rent' : 'For Sale'}
-                    </span>
-                    <span className="text-[9px] uppercase tracking-[0.2em] font-semibold text-luxury-silver bg-white/5 px-2.5 py-1 rounded">
-                      {property.property_type}
-                    </span>
-                    {property.status && (
-                      <span className={`text-[9px] uppercase tracking-[0.2em] font-semibold px-2.5 py-1 rounded border ${
-                        property.status === 'active' 
-                          ? 'border-green-500/30 bg-green-500/10 text-green-400' 
-                          : 'border-white/10 bg-white/5 text-luxury-silver'
-                      }`}>
-                        {statusLabel[property.status] || property.status}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-luxury-gold">
-                    {property.city} — {property.location}
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(280px, 0.85fr)', gap: '3rem' }} className="detail-layout">
+            <div>
+              <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '1.1rem' }}>
+                <span className={`pill ${property.listing_type === 'rent' ? 'pill--rent' : 'pill--sale'}`}>
+                  {property.listing_type === 'rent' ? 'For rent' : 'For sale'}
+                </span>
+                {property.property_type && <span className="pill">{property.property_type}</span>}
+                {property.status && (
+                  <span className={`pill ${property.status === 'active' ? 'pill--active' : 'pill--sold'}`}>
+                    {statusLabel[property.status] || property.status}
                   </span>
-                  
-                  <h1 className="text-4xl md:text-5xl font-serif text-luxury-cream mt-2 mb-4 font-light leading-tight">
-                    {property.title}
-                  </h1>
-                  
-                  <p className="text-2.5xl text-luxury-gold font-light tracking-wide">
-                    {formatPrice(property.price)}
-                  </p>
-                </div>
-
-                <div className="h-[1px] w-full bg-white/5" />
-
-                <div>
-                  <h3 className="text-xs uppercase tracking-[0.2em] text-luxury-cream font-semibold mb-4">Overview</h3>
-                  <p className="text-luxury-silver/95 leading-relaxed font-light font-sans text-base">
-                    {property.description || 'An extraordinary luxury residence offering Market-leading design, ultimate comfort, and sophistication.'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Sidebar Panel (Right) */}
-              <div className="lg:col-span-4 space-y-8">
-                
-                {/* Stats summary */}
-                <div className="p-6 md:p-8 glass-panel rounded-lg hover:border-luxury-gold/10 transition-colors shadow-xl">
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div>
-                      <p className="text-2xl font-serif font-light text-luxury-cream">{property.bedrooms}</p>
-                      <p className="text-[8px] uppercase tracking-[0.15em] text-luxury-silver/80 mt-1">Beds</p>
-                    </div>
-                    <div className="border-x border-white/5">
-                      <p className="text-2xl font-serif font-light text-luxury-cream">{property.bathrooms}</p>
-                      <p className="text-[8px] uppercase tracking-[0.15em] text-luxury-silver/80 mt-1">Baths</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-serif font-light text-luxury-cream">{property.area?.toLocaleString()}</p>
-                      <p className="text-[8px] uppercase tracking-[0.15em] text-luxury-silver/80 mt-1">Sq Ft</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Amenities */}
-                <div className="p-6 md:p-8 glass-panel rounded-lg hover:border-luxury-gold/10 transition-colors shadow-xl">
-                  <h4 className="text-[9px] uppercase tracking-[0.2em] text-luxury-silver font-semibold mb-4">Specifications</h4>
-                  <ul className="space-y-3">
-                    {amenities.map((a) => (
-                      <li key={a} className="text-xs text-luxury-silver/90 flex items-center gap-3 font-light">
-                        <span className="w-1.5 h-1.5 bg-luxury-gold rounded-full" />
-                        {a}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Lead Inquiry Form */}
-                {property.status === 'active' && (
-                  <div className="p-6 md:p-8 glass-panel rounded-lg hover:border-luxury-gold/10 transition-colors shadow-xl">
-                    <h4 className="text-[9px] uppercase tracking-[0.2em] text-luxury-silver font-semibold mb-5">Inquire About This Estate</h4>
-                    
-                    <form onSubmit={handleInquirySubmit} className="space-y-4">
-                      <input
-                        type="text"
-                        placeholder="Your name"
-                        value={inquiryForm.name}
-                        onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
-                        required
-                        className="w-full bg-luxury-black/35 border border-white/5 focus:border-luxury-gold/50 px-4 py-3 text-xs text-luxury-cream focus:outline-none transition-colors rounded placeholder-luxury-silver/20"
-                      />
-                      <input
-                        type="email"
-                        placeholder="Your email address"
-                        value={inquiryForm.email}
-                        onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
-                        required
-                        className="w-full bg-luxury-black/35 border border-white/5 focus:border-luxury-gold/50 px-4 py-3 text-xs text-luxury-cream focus:outline-none transition-colors rounded placeholder-luxury-silver/20"
-                      />
-                      <textarea
-                        placeholder="Type message details..."
-                        value={inquiryForm.message}
-                        onChange={(e) => setInquiryForm({ ...inquiryForm, message: e.target.value })}
-                        required
-                        rows={3}
-                        className="w-full bg-luxury-black/35 border border-white/5 focus:border-luxury-gold/50 px-4 py-3 text-xs text-luxury-cream focus:outline-none transition-colors resize-none rounded placeholder-luxury-silver/20"
-                      />
-                      
-                      {inquiryStatus.message && (
-                        <p className={`text-[10px] font-medium tracking-wide ${inquiryStatus.type === 'success' ? 'text-luxury-gold' : 'text-red-400'}`}>
-                          {inquiryStatus.message}
-                        </p>
-                      )}
-                      
-                      <Button type="submit" disabled={submitting} className="w-full py-3.5 mt-2 shadow-[0_0_15px_var(--color-luxury-gold-glow)]">
-                        {submitting ? 'Sending...' : 'Submit Inquiry'}
-                      </Button>
-                    </form>
-                  </div>
                 )}
-
               </div>
+              <p className="eyebrow">{[property.city, property.location].filter(Boolean).join(' — ')}</p>
+              <h1 className="section-title">{property.title}</h1>
+              <p style={{ fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', color: 'var(--color-accent)', margin: '1rem 0 2rem' }}>
+                {formatPrice(property.price)}
+              </p>
 
+              <dl className="property-card__specs" style={{ maxWidth: '28rem', marginBottom: '2.5rem' }}>
+                <div>
+                  <dt>Bedrooms</dt>
+                  <dd>{property.bedrooms ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt>Bathrooms</dt>
+                  <dd>{property.bathrooms ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt>Area</dt>
+                  <dd>{property.area ? `${property.area.toLocaleString()} ft²` : '—'}</dd>
+                </div>
+              </dl>
+
+              <h2 className="eyebrow">Description</h2>
+              <p className="lede" style={{ marginBottom: '2.5rem' }}>
+                {property.description || 'An extraordinary residence offering considered design, comfort, and a precise relationship to its site.'}
+              </p>
+
+              <h2 className="eyebrow">Features</h2>
+              <ul style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem 1.5rem', listStyle: 'none', marginBottom: '2.5rem' }}>
+                {amenities.map((item) => (
+                  <li key={item} style={{ borderTop: '1px solid var(--color-line)', paddingTop: '0.6rem' }}>{item}</li>
+                ))}
+              </ul>
+
+              <h2 className="eyebrow">Location</h2>
+              <p className="lede">{property.location}{property.city ? `, ${property.city}` : ''}</p>
+              {property.city && (
+                <p style={{ marginTop: '0.75rem' }}>
+                  <Link to={`/properties?city=${encodeURIComponent(property.city)}`} className="text-link">
+                    More in {property.city}
+                  </Link>
+                </p>
+              )}
+
+              <div className="editorial-panel" style={{ padding: '1.5rem', marginTop: '2.5rem' }}>
+                <p className="eyebrow">Advisor</p>
+                <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.8rem', fontWeight: 400 }}>{agent.name}</h3>
+                <p style={{ color: 'var(--color-ink-soft)' }}>{agent.title || 'Private client advisor'}</p>
+                {agent.phone && <p style={{ marginTop: '0.75rem' }}><a href={`tel:${agent.phone}`}>{agent.phone}</a></p>}
+                {agent.email && <p><a href={`mailto:${agent.email}`}>{agent.email}</a></p>}
+              </div>
             </div>
-          </motion.div>
+
+            <aside className="sticky-cta">
+              <div className="editorial-panel" style={{ padding: '1.6rem' }}>
+                <h2 className="eyebrow">Enquire / viewing</h2>
+                <p style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', lineHeight: 1, marginBottom: '1rem' }}>
+                  {formatPrice(property.price)}
+                </p>
+                <button
+                  type="button"
+                  className={`save-btn ${isSaved(property.id) ? 'is-saved' : ''}`}
+                  onClick={() => (user ? toggle(property.id) : navigate('/login'))}
+                  style={{ marginBottom: '1.25rem' }}
+                >
+                  {isSaved(property.id) ? 'Saved to your list' : 'Save this residence'}
+                </button>
+                {property.status === 'active' || !property.status ? (
+                  <form onSubmit={handleInquirySubmit} style={{ display: 'grid', gap: '0.75rem' }}>
+                    <input
+                      required
+                      placeholder="Name"
+                      value={inquiryForm.name}
+                      onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
+                      className="field"
+                    />
+                    <input
+                      required
+                      type="email"
+                      placeholder="Email"
+                      value={inquiryForm.email}
+                      onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
+                      className="field"
+                    />
+                    <textarea
+                      required
+                      placeholder="Preferred dates, questions, or notes"
+                      value={inquiryForm.message}
+                      onChange={(e) => setInquiryForm({ ...inquiryForm, message: e.target.value })}
+                      className="luxury-textarea-field"
+                      rows={4}
+                    />
+                    <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={inquiryForm.viewing}
+                        onChange={(e) => setInquiryForm({ ...inquiryForm, viewing: e.target.checked })}
+                      />
+                      Schedule a viewing
+                    </label>
+                    {inquiryStatus.message && (
+                      <p role="status" className={inquiryStatus.type === 'success' ? 'form-status--ok' : 'form-status--err'}>
+                        {inquiryStatus.message}
+                      </p>
+                    )}
+                    <Button type="submit" disabled={submitting} className="w-full">
+                      {submitting ? 'Sending…' : 'Send enquiry'}
+                    </Button>
+                  </form>
+                ) : (
+                  <p className="lede" style={{ fontSize: '1rem' }}>This listing is no longer available for enquiry.</p>
+                )}
+              </div>
+            </aside>
+          </div>
+
+          {similar.length > 0 && (
+            <section style={{ marginTop: '5rem' }}>
+              <h2 className="section-title" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', marginBottom: '2rem' }}>Similar residences</h2>
+              <div className="property-grid">
+                {similar.map((item) => (
+                  <PropertyCard
+                    key={item.id}
+                    property={item}
+                    saved={isSaved(item.id)}
+                    signedIn={Boolean(user)}
+                    onToggleSave={toggle}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </main>
       <Footer />

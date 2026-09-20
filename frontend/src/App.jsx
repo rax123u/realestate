@@ -1,67 +1,71 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import HomePage from './pages/HomePage';
-import PropertiesPage from './pages/PropertiesPage';
-import PropertyDetailPage from './pages/PropertyDetailPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import AdminDashboard from './pages/AdminDashboard';
-import AddProperty from './pages/AddProperty';
-import MyListingsPage from './pages/MyListingsPage';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { prefersReducedMotion } from './lib/motion';
+import HomePage from './pages/HomePage';
+import PropertiesPage from './pages/PropertiesPage';
+import PropertyDetailPage from './pages/PropertyDetailPage';
+
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AddProperty = lazy(() => import('./pages/AddProperty'));
+const MyListingsPage = lazy(() => import('./pages/MyListingsPage'));
 
 gsap.registerPlugin(ScrollTrigger);
 
-function AnimatedRoutes() {
-  const location = useLocation();
+function PageFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-paper)' }}>
+      <div className="spinner" aria-label="Loading page" />
+    </div>
+  );
+}
 
+function SmoothScroll() {
   useEffect(() => {
-    let lenis = null;
-    let rafId = null;
+    if (prefersReducedMotion()) return undefined;
 
-    lenis = new Lenis({
-      duration: 1.2,
+    const lenis = new Lenis({
+      duration: 1.05,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       smoothWheel: true,
+      autoRaf: false,
     });
 
     lenis.on('scroll', ScrollTrigger.update);
 
-    const raf = (time) => {
-      lenis.raf(time);
-      rafId = requestAnimationFrame(raf);
+    const ticker = (time) => {
+      lenis.raf(time * 1000);
     };
-    rafId = requestAnimationFrame(raf);
+    gsap.ticker.add(ticker);
+    gsap.ticker.lagSmoothing(0);
 
     window.lenis = lenis;
+    const refresh = window.setTimeout(() => ScrollTrigger.refresh(), 80);
 
     return () => {
-      if (lenis) {
-        lenis.destroy();
-        window.lenis = null;
-      }
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-      }
+      window.clearTimeout(refresh);
+      gsap.ticker.remove(ticker);
+      lenis.destroy();
+      window.lenis = null;
     };
-  }, [location.pathname]);
+  }, []);
+
+  return null;
+}
+
+function AppRoutes() {
+  const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={location.pathname}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        className="w-full flex-grow flex flex-col items-stretch overflow-x-hidden"
-      >
+    <Suspense fallback={<PageFallback />}>
+      <div key={location.pathname} className="w-full flex-grow flex flex-col">
         <Routes location={location}>
           <Route path="/" element={<HomePage />} />
           <Route path="/properties" element={<PropertiesPage />} />
@@ -79,21 +83,34 @@ function AnimatedRoutes() {
             }
           />
         </Routes>
-      </motion.div>
-    </AnimatePresence>
+      </div>
+    </Suspense>
   );
 }
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
 
   useEffect(() => {
-    if (window.lenis) {
-      window.lenis.scrollTo(0, { immediate: true });
-    } else {
-      window.scrollTo(0, 0);
+    if (hash) {
+      const id = hash.replace('#', '');
+      const scrollToHash = () => {
+        const el = document.getElementById(id);
+        if (!el) return false;
+        if (window.lenis) window.lenis.scrollTo(el, { offset: -80, duration: 1.05 });
+        else el.scrollIntoView({ behavior: 'smooth' });
+        return true;
+      };
+      if (scrollToHash()) return undefined;
+      const timer = window.setTimeout(scrollToHash, 160);
+      return () => window.clearTimeout(timer);
     }
-  }, [pathname]);
+
+    if (window.lenis) window.lenis.scrollTo(0, { immediate: true });
+    else window.scrollTo(0, 0);
+    ScrollTrigger.refresh();
+    return undefined;
+  }, [pathname, hash]);
 
   return null;
 }
@@ -102,8 +119,9 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <SmoothScroll />
         <ScrollToTop />
-        <AnimatedRoutes />
+        <AppRoutes />
       </BrowserRouter>
     </AuthProvider>
   );

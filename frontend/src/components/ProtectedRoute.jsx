@@ -6,8 +6,8 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-luxury-black flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-luxury-gold border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-paper)' }}>
+        <div className="spinner" aria-label="Loading" />
       </div>
     );
   }

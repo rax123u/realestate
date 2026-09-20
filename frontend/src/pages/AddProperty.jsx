@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Button from '../components/ui/Button';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { propertyAPI } from '../api';
+import { compressImageFile } from '../lib/images';
 
 const AMENITY_OPTIONS = [
   'Pool', 'Garage', 'Garden', 'Smart Home', 'Gym', 'Security',
@@ -37,7 +38,23 @@ function AddPropertyForm() {
   const [primaryFile, setPrimaryFile] = useState(null);
   const [primaryPreview, setPrimaryPreview] = useState('');
   const [extraFiles, setExtraFiles] = useState([]);
+  const extraFilesRef = useRef([]);
   const navigate = useNavigate();
+  extraFilesRef.current = extraFiles;
+
+  useEffect(() => {
+    return () => {
+      if (primaryPreview.startsWith('blob:')) URL.revokeObjectURL(primaryPreview);
+    };
+  }, [primaryPreview]);
+
+  useEffect(() => {
+    return () => {
+      extraFilesRef.current.forEach((item) => {
+        if (item.preview?.startsWith('blob:')) URL.revokeObjectURL(item.preview);
+      });
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -46,21 +63,29 @@ function AddPropertyForm() {
 
   const handlePrimaryFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setPrimaryFile(file);
-      setPrimaryPreview(URL.createObjectURL(file));
-      // Clear manual URL string if file is chosen
-      setForm((prev) => ({ ...prev, primary_image: '' }));
-    }
+    if (!file) return;
+    if (primaryPreview.startsWith('blob:')) URL.revokeObjectURL(primaryPreview);
+    setPrimaryFile(file);
+    setPrimaryPreview(URL.createObjectURL(file));
+    setForm((prev) => ({ ...prev, primary_image: '' }));
   };
 
   const handleExtraFilesChange = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []).map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
     setExtraFiles((prev) => [...prev, ...files]);
+    e.target.value = '';
   };
 
   const removeExtraFile = (index) => {
-    setExtraFiles((prev) => prev.filter((_, i) => i !== index));
+    setExtraFiles((prev) => {
+      const next = [...prev];
+      const [removed] = next.splice(index, 1);
+      if (removed?.preview?.startsWith('blob:')) URL.revokeObjectURL(removed.preview);
+      return next;
+    });
   };
 
   const toggleAmenity = (amenity) => {
@@ -77,36 +102,39 @@ function AddPropertyForm() {
     setLoading(true);
     setError('');
 
+    if (!primaryFile) {
+      setError('Choose a primary photograph from your computer.');
+      setLoading(false);
+      return;
+    }
+
     const payload = {
       ...form,
       price: Number(form.price),
       bedrooms: Number(form.bedrooms),
       bathrooms: Number(form.bathrooms),
       area: Number(form.area),
-      primary_image: form.primary_image || undefined,
+      primary_image: undefined,
       video_url: form.video_url || undefined,
     };
 
     try {
-      // 1. Create property
       const { data: createdProperty } = await propertyAPI.create(payload);
 
-      // 2. Upload primary image file if selected
-      if (primaryFile) {
+      const upload = async (file, isPrimary) => {
+        const prepared = await compressImageFile(file);
         const formData = new FormData();
-        formData.append('image', primaryFile);
-        formData.append('is_primary', '1');
+        formData.append('image', prepared);
+        formData.append('is_primary', isPrimary ? '1' : '0');
         await propertyAPI.uploadImage(createdProperty.id, formData);
+      };
+
+      if (primaryFile) {
+        await upload(primaryFile, true);
       }
 
-      // 3. Upload additional image files if selected
-      if (extraFiles.length > 0) {
-        for (const file of extraFiles) {
-          const formData = new FormData();
-          formData.append('image', file);
-          formData.append('is_primary', '0');
-          await propertyAPI.uploadImage(createdProperty.id, formData);
-        }
+      for (const item of extraFiles) {
+        await upload(item.file, false);
       }
 
       navigate('/my-listings');
@@ -115,197 +143,180 @@ function AddPropertyForm() {
       setError(
         errors
           ? Object.values(errors).flat().join(', ')
-          : err.response?.data?.message || 'Failed to create property'
+          : err.response?.data?.message || 'Failed to create property',
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const inputClass =
-    'w-full bg-luxury-black border border-white/10 px-4 py-2 text-sm text-luxury-cream focus:border-luxury-gold focus:outline-none';
-
   return (
     <>
       <Navbar />
-      <main className="pt-28 pb-16 bg-luxury-black min-h-screen relative overflow-x-hidden">
-        <div className="w-full max-w-[92%] lg:max-w-[70vw] mx-auto px-6">
-          <Link to="/my-listings" className="text-xs text-luxury-silver hover:text-luxury-gold mb-6 inline-block">
-            &larr; Back to My Listings
+      <main className="workspace">
+        <div className="site-wrap">
+          <Link to="/my-listings" className="text-link" style={{ display: 'inline-block', marginBottom: '1.5rem' }}>
+            Back to workspace
           </Link>
-          <h1 className="text-3xl font-bold text-luxury-cream mb-2">Post a Property</h1>
-          <p className="text-luxury-silver text-sm mb-8">
-            List your property for sale or rent with full details
+          <p className="eyebrow">New listing</p>
+          <h1 className="section-title" style={{ marginBottom: '0.75rem' }}>Post a property.</h1>
+          <p className="lede" style={{ marginBottom: '2.25rem' }}>
+            Title, specification, and photographs — enough for a serious buyer to decide.
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6 p-6 border border-white/10 bg-luxury-charcoal">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-1">Title</label>
-                <input name="title" value={form.title} onChange={handleChange} required className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-1">Location</label>
-                <input name="location" value={form.location} onChange={handleChange} required className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-1">City</label>
-                <input name="city" value={form.city} onChange={handleChange} required className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-1">Listing Type</label>
-                <select name="listing_type" value={form.listing_type} onChange={handleChange} className={inputClass}>
-                  <option value="sale">For Sale</option>
-                  <option value="rent">For Rent</option>
+          <form onSubmit={handleSubmit} className="editorial-panel" style={{ padding: '1.75rem', display: 'grid', gap: '1.15rem' }}>
+            <div className="filter-form" style={{ marginBottom: 0 }}>
+              <label className="luxury-label" style={{ gridColumn: '1 / -1' }}>
+                Title
+                <input name="title" value={form.title} onChange={handleChange} required className="field" />
+              </label>
+              <label className="luxury-label">
+                Location
+                <input name="location" value={form.location} onChange={handleChange} required className="field" />
+              </label>
+              <label className="luxury-label">
+                City
+                <input name="city" value={form.city} onChange={handleChange} required className="field" />
+              </label>
+              <label className="luxury-label">
+                Listing type
+                <select name="listing_type" value={form.listing_type} onChange={handleChange} className="field">
+                  <option value="sale">For sale</option>
+                  <option value="rent">For rent</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-1">Property Type</label>
-                <select name="property_type" value={form.property_type} onChange={handleChange} className={inputClass}>
+              </label>
+              <label className="luxury-label">
+                Property type
+                <select name="property_type" value={form.property_type} onChange={handleChange} className="field">
                   <option value="house">House</option>
                   <option value="apartment">Apartment</option>
                   <option value="villa">Villa</option>
                   <option value="commercial">Commercial</option>
                   <option value="land">Land</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-1">Price</label>
-                <input name="price" type="number" value={form.price} onChange={handleChange} required className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-1">Area (sq ft)</label>
-                <input name="area" type="number" value={form.area} onChange={handleChange} required className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-1">Bedrooms</label>
-                <input name="bedrooms" type="number" value={form.bedrooms} onChange={handleChange} required className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-1">Bathrooms</label>
-                <input name="bathrooms" type="number" value={form.bathrooms} onChange={handleChange} required className={inputClass} />
-              </div>
-              
-              <div className="md:col-span-2 border-t border-white/5 pt-4">
-                <h3 className="text-sm font-semibold text-luxury-cream mb-4">Property Images</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-2">Primary Image File</label>
-                    <div className="relative border border-dashed border-white/10 hover:border-luxury-gold/50 p-4 transition-colors flex flex-col items-center justify-center min-h-[140px] bg-luxury-black">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePrimaryFileChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      {primaryPreview ? (
-                        <img src={primaryPreview} alt="Primary Preview" className="w-full h-28 object-cover rounded" />
-                      ) : (
-                        <div className="text-center">
-                          <p className="text-sm text-luxury-silver">Click or Drag Image File</p>
-                          <p className="text-xs text-luxury-silver/60 mt-1">PNG, JPG, WEBP up to 10MB</p>
-                        </div>
+              </label>
+              <label className="luxury-label">
+                Price
+                <input name="price" type="number" min="0" value={form.price} onChange={handleChange} required className="field" />
+              </label>
+              <label className="luxury-label">
+                Area (sq ft)
+                <input name="area" type="number" min="0" value={form.area} onChange={handleChange} required className="field" />
+              </label>
+              <label className="luxury-label">
+                Bedrooms
+                <input name="bedrooms" type="number" min="0" value={form.bedrooms} onChange={handleChange} required className="field" />
+              </label>
+              <label className="luxury-label">
+                Bathrooms
+                <input name="bathrooms" type="number" min="0" value={form.bathrooms} onChange={handleChange} required className="field" />
+              </label>
+            </div>
+
+            <div>
+              <h2 className="eyebrow">Photographs</h2>
+              <div style={{ display: 'grid', gap: '1.25rem' }}>
+                <div>
+                  <p className="luxury-label">Primary image</p>
+                  <div className="editorial-panel" style={{ padding: '1.15rem', display: 'grid', gap: '0.85rem' }}>
+                    {primaryPreview && (
+                      <img src={primaryPreview} alt="Primary preview" style={{ width: '100%', maxHeight: '16rem', objectFit: 'cover' }} />
+                    )}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+                      <label className="btn-base btn-luxury">
+                        {primaryFile ? 'Replace from computer' : 'Select from computer'}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/jpg"
+                          onChange={handlePrimaryFileChange}
+                          className="sr-only"
+                        />
+                      </label>
+                      {primaryFile && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (primaryPreview.startsWith('blob:')) URL.revokeObjectURL(primaryPreview);
+                            setPrimaryFile(null);
+                            setPrimaryPreview('');
+                          }}
+                          className="text-link"
+                          style={{ background: 'none', border: 0, cursor: 'pointer' }}
+                        >
+                          Remove
+                        </button>
                       )}
                     </div>
+                    <p className="lede" style={{ fontSize: '0.9rem' }}>
+                      {primaryFile ? primaryFile.name : 'JPG, PNG, or WEBP from your computer.'}
+                    </p>
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-2">Or Primary Image URL</label>
-                    <input
-                      name="primary_image"
-                      value={form.primary_image}
-                      onChange={handleChange}
-                      disabled={!!primaryFile}
-                      className={`${inputClass} h-12`}
-                      placeholder={primaryFile ? "Using uploaded file..." : "https://example.com/image.jpg"}
-                    />
-                    {primaryFile && (
-                      <button
-                        type="button"
-                        onClick={() => { setPrimaryFile(null); setPrimaryPreview(''); }}
-                        className="text-xs text-red-400 mt-2 hover:underline cursor-pointer"
-                      >
-                        Reset Uploaded File
-                      </button>
+                <div>
+                  <p className="luxury-label">Additional images</p>
+                  <div className="editorial-panel" style={{ padding: '1.15rem', display: 'grid', gap: '0.85rem' }}>
+                    <label className="btn-base btn-luxury" style={{ width: 'fit-content' }}>
+                      Select from computer
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/jpg"
+                        multiple
+                        onChange={handleExtraFilesChange}
+                        className="sr-only"
+                      />
+                    </label>
+                    {extraFiles.length > 0 && (
+                      <div className="thumb-grid">
+                        {extraFiles.map((item, idx) => (
+                          <div key={`${item.file.name}-${idx}`} className="editorial-panel" style={{ padding: '0.6rem' }}>
+                            <img src={item.preview} alt="" style={{ width: '100%', height: '6rem', objectFit: 'cover' }} />
+                            <p className="lede" style={{ fontSize: '0.75rem', marginTop: '0.4rem' }}>{item.file.name}</p>
+                            <button type="button" onClick={() => removeExtraFile(idx)} className="ghost-btn ghost-btn--danger" style={{ marginTop: '0.4rem', width: '100%' }}>
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="md:col-span-2 mt-4">
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-2">Additional Images</label>
-                <div className="border border-dashed border-white/10 p-4 bg-luxury-black flex flex-col items-center justify-center min-h-[100px] relative hover:border-luxury-gold/50 transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleExtraFilesChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <p className="text-sm text-luxury-silver">Select Multiple Additional Images</p>
-                  <p className="text-xs text-luxury-silver/60 mt-1">Upload additional property views</p>
-                </div>
-                
-                {extraFiles.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                    {extraFiles.map((file, idx) => (
-                      <div key={idx} className="relative group border border-white/5 bg-luxury-black p-2 rounded">
-                        <p className="text-xs text-luxury-cream truncate pr-6">{file.name}</p>
-                        <p className="text-[10px] text-luxury-silver">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                        <button
-                          type="button"
-                          onClick={() => removeExtraFile(idx)}
-                          className="absolute right-2 top-2 text-red-400 hover:text-red-500 cursor-pointer"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <label className="luxury-label">
+              Video URL (optional)
+              <input name="video_url" value={form.video_url} onChange={handleChange} className="field" />
+            </label>
 
-              <div className="md:col-span-2">
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-1">Video URL (optional)</label>
-                <input name="video_url" value={form.video_url} onChange={handleChange} className={inputClass} />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-2">Amenities</label>
-                <div className="flex flex-wrap gap-2">
-                  {AMENITY_OPTIONS.map((a) => (
-                    <button
-                      key={a}
-                      type="button"
-                      onClick={() => toggleAmenity(a)}
-                      className={`text-xs px-3 py-1 border cursor-pointer ${
-                        form.amenities.includes(a)
-                          ? 'border-luxury-gold text-luxury-gold'
-                          : 'border-white/10 text-luxury-silver'
-                      }`}
-                    >
-                      {a}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs uppercase tracking-wider text-luxury-silver mb-1">Description</label>
-                <textarea
-                  name="description"
-                  value={form.description}
-                  onChange={handleChange}
-                  rows={4}
-                  className={inputClass}
-                />
+            <div>
+              <p className="luxury-label">Amenities</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {AMENITY_OPTIONS.map((amenity) => (
+                  <button
+                    key={amenity}
+                    type="button"
+                    onClick={() => toggleAmenity(amenity)}
+                    className={`amenity-chip ${form.amenities.includes(amenity) ? 'is-on' : ''}`}
+                  >
+                    {amenity}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {error && <p className="text-red-400 text-sm">{error}</p>}
+            <label className="luxury-label">
+              Description
+              <textarea name="description" value={form.description} onChange={handleChange} rows={5} className="luxury-textarea-field" />
+            </label>
 
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Publishing...' : 'Publish Listing'}
-            </Button>
+            {error && <p className="form-status--err" role="alert">{error}</p>}
+
+            <div>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Publishing…' : 'Publish listing'}
+              </Button>
+            </div>
           </form>
         </div>
       </main>
